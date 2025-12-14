@@ -1,6 +1,7 @@
 package com.clapped.boundary.rest;
 
 import com.clapped.boundary.rest.dto.PlayerDto;
+import com.clapped.main.model.Player;
 import com.clapped.main.model.ProcessResult;
 import com.clapped.main.service.GameService;
 import com.clapped.main.service.GameState;
@@ -44,8 +45,17 @@ public class GameEndpoint {
         this.randomProvider = randomProvider;
     }
 
+    @GET
+    @Path("/state/current")
+    public Response getCurrentState() {
+        final List<Player> players = gameService.getCurrentState();
+        return players != null && !players.isEmpty()
+            ? Response.ok(players).build()
+            : Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("No players").build();
+    }
+
     @POST
-    @Path("game/finaliseTeams")
+    @Path("/game/finaliseTeams")
     public Response finaliseTeams() {
         final ProcessResult result = gameService.finaliseTeams();
         return result.isSuccess()
@@ -54,7 +64,7 @@ public class GameEndpoint {
     }
 
     @PATCH
-    @Path("settings/changeLevel/{newLevel}")
+    @Path("/settings/changeLevel/{newLevel}")
     public Response changeLevel(@PathParam("newLevel") int newLevel) {
         final ProcessResult result = gameService.changeGlobalLevel(newLevel);
         return result.isSuccess()
@@ -63,7 +73,7 @@ public class GameEndpoint {
     }
 
     @PATCH
-    @Path("settings/changeGeneration/{newGen}")
+    @Path("/settings/changeGeneration/{newGen}")
     public Response changeGeneration(@PathParam("newGen") int newGen) {
         final ProcessResult result = gameService.changeGlobalGen(newGen);
         return result.isSuccess()
@@ -72,7 +82,7 @@ public class GameEndpoint {
     }
 
     @PATCH
-    @Path("settings/toggleShowdownIcons/{on}")
+    @Path("/settings/toggleShowdownIcons/{on}")
     public Response toggleShowdownIcons(@PathParam("on") boolean on) {
         final ProcessResult result = gameService.toggleShowdownIcons(on);
         return result.isSuccess()
@@ -81,14 +91,14 @@ public class GameEndpoint {
     }
 
     @GET
-    @Path("util/getTurnNum")
+    @Path("/util/getTurnNum")
     public Response getTurn() {
         final int turn = turnService.getTurnNum();
         return Response.ok(turn).build();
     }
 
     @POST
-    @Path("util/randomTeams")
+    @Path("/util/randomTeams")
     public Response initialiseTeams() {
         int teamNum = 1;
         List<ProcessResult> results = new ArrayList<>();

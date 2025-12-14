@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 
 @Slf4j
-@Path("player")
+@Path("/player")
 @ApplicationScoped
 public class PlayerEndpoint {
 
@@ -26,7 +26,7 @@ public class PlayerEndpoint {
     }
 
     @POST
-    @Path("join")
+    @Path("/join")
     public Response join(@RequestBody final PlayerDto playerDto) {
         final ProcessResult result = playerService.join(playerDto);
         return result.isSuccess()
@@ -35,7 +35,7 @@ public class PlayerEndpoint {
     }
 
     @DELETE
-    @Path("leave/{userId}")
+    @Path("/leave/{userId}")
     public Response leave(
             @PathParam("userId") final String userId
     ) {

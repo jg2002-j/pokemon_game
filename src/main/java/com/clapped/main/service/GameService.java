@@ -3,12 +3,14 @@ package com.clapped.main.service;
 import com.clapped.main.messaging.events.GameEvent;
 import com.clapped.main.messaging.events.GameEvtType;
 import com.clapped.main.messaging.producer.GameEventProducer;
+import com.clapped.main.model.Player;
 import com.clapped.main.model.ProcessResult;
 import com.clapped.pokemon.model.Generation;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -23,6 +25,10 @@ public class GameService {
         this.state = state;
         this.turnService = turnService;
         this.gameEventProducer = gameEventProducer;
+    }
+
+    public List<Player> getCurrentState() {
+            return state.getAllPlayers();
     }
 
     public ProcessResult changeGlobalLevel(final int newLvl) {
@@ -71,4 +77,5 @@ public class GameService {
             return ProcessResult.error("Game already started, all players must submit turn options to move to the next turn.");
         }
     }
+
 }
