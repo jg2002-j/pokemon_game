@@ -1,5 +1,6 @@
 package com.clapped.main.service;
 
+import com.clapped.main.messaging.events.EventType;
 import com.clapped.main.messaging.events.GameEvent;
 import com.clapped.main.messaging.events.TurnInfoEvent;
 import com.clapped.main.messaging.producer.GameEventProducer;
@@ -56,6 +57,7 @@ public class TurnService {
         turnNum++;
         gameEventProducer.sendGameEvent(new GameEvent(
                 System.currentTimeMillis(),
+                EventType.GAME_EVENT,
                 TURN_CHANGE,
                 turnNum,
                 ProcessResult.success("Turn " + turnNum + " started.")
@@ -63,6 +65,7 @@ public class TurnService {
         populatePlayerActionChoices();
         turnInfoEventProducer.sendTurnInfoEvent(new TurnInfoEvent(
                 System.currentTimeMillis(),
+                EventType.TURN_INFO_EVENT,
                 playerActionChoices,
                 ProcessResult.success(null)
         ));

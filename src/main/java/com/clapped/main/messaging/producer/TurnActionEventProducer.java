@@ -16,7 +16,7 @@ public class TurnActionEventProducer {
     Emitter<TurnActionEvent> turnEventemitter;
 
     public void sendTurnActionEvent(final TurnActionEvent evt) {
-        log.info("Sending new turn-action {} event: {}", evt.getEventTypes(), evt);
+        log.info("Sending new turn-action {} event: {}", evt.getTurnActionEvtTypes(), evt);
         turnEventemitter.send(evt);
     }
 

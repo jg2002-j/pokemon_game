@@ -1,16 +1,15 @@
 package com.clapped.main.service;
 
+import com.clapped.main.messaging.events.EventType;
 import com.clapped.main.messaging.events.GameEvent;
 import com.clapped.main.messaging.events.GameEvtType;
 import com.clapped.main.messaging.producer.GameEventProducer;
-import com.clapped.main.model.Player;
 import com.clapped.main.model.ProcessResult;
 import com.clapped.pokemon.model.Generation;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -27,15 +26,12 @@ public class GameService {
         this.gameEventProducer = gameEventProducer;
     }
 
-    public List<Player> getCurrentState() {
-            return state.getAllPlayers();
-    }
-
     public ProcessResult changeGlobalLevel(final int newLvl) {
         if (newLvl <= 100 && newLvl > 0) {
             state.setPokemonLevel(newLvl);
             gameEventProducer.sendGameEvent(new GameEvent(
                     System.currentTimeMillis(),
+                    EventType.GAME_EVENT,
                     GameEvtType.LEVEL_CHANGE,
                     newLvl,
                     ProcessResult.success("Pokemon Level successfully updated to " + newLvl)
@@ -56,6 +52,7 @@ public class GameService {
             final ProcessResult res = ProcessResult.success("Pokemon Generation now set to " + newGeneration);
             gameEventProducer.sendGameEvent(new GameEvent(
                     System.currentTimeMillis(),
+                    EventType.GAME_EVENT,
                     GameEvtType.GENERATION_CHANGE,
                     newGeneration.getNumericalVal(),
                     res

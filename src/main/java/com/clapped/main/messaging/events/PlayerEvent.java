@@ -11,7 +11,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PlayerEvent {
     private long timestamp;
+    private EventType eventType;
+    private PlayerEvtType playerEvtType;
     private Player player;
-    private PlayerEvtType eventType;
     private ProcessResult result;
 }

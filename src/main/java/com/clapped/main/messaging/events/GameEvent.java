@@ -10,7 +10,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class GameEvent {
     private long timestamp;
-    private GameEvtType eventType;
+    private EventType eventType;
+    private GameEvtType gameEvtType;
     private int newVal;
     private ProcessResult result;
 }

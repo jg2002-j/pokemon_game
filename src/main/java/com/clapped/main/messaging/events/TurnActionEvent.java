@@ -13,7 +13,8 @@ import java.util.List;
 @NoArgsConstructor
 public class TurnActionEvent {
     private long timestamp;
-    private List<TurnActionEvtType> eventTypes;
+    private EventType eventType;
+    private List<TurnActionEvtType> turnActionEvtTypes;
     private Player affectedPlayer;
     private ProcessResult result;
 }

@@ -1,6 +1,7 @@
 package com.clapped.main.service;
 
 import com.clapped.boundary.rest.dto.PlayerDto;
+import com.clapped.main.messaging.events.EventType;
 import com.clapped.main.messaging.events.PlayerEvent;
 import com.clapped.main.messaging.events.PlayerEvtType;
 import com.clapped.main.messaging.producer.PlayerEventProducer;
@@ -73,7 +74,7 @@ public class PlayerService {
             );
             final ProcessResult result = ProcessResult.success(msg);
             playerEventProducer.sendPlayerEvent(new PlayerEvent(
-                    System.currentTimeMillis(), player, PlayerEvtType.JOIN, result
+                    System.currentTimeMillis(), EventType.PLAYER_EVENT, PlayerEvtType.JOIN, player, result
             ));
             return result;
         } catch (Exception ex) {
@@ -102,7 +103,7 @@ public class PlayerService {
             String msg = "LEAVE: Player " + username + " left Team " + removed.getTeamNum();
             final ProcessResult result = ProcessResult.success(msg);
             playerEventProducer.sendPlayerEvent(
-                    new PlayerEvent(System.currentTimeMillis(), removed, PlayerEvtType.LEAVE, result)
+                    new PlayerEvent(System.currentTimeMillis(), EventType.PLAYER_EVENT, PlayerEvtType.LEAVE, removed, result)
             );
             return result;
         } catch (Exception ex) {

@@ -1,7 +1,6 @@
 package com.clapped.boundary.rest;
 
 import com.clapped.boundary.rest.dto.PlayerDto;
-import com.clapped.main.model.Player;
 import com.clapped.main.model.ProcessResult;
 import com.clapped.main.service.GameService;
 import com.clapped.main.service.GameState;
@@ -46,12 +45,9 @@ public class GameEndpoint {
     }
 
     @GET
-    @Path("/state/current")
+    @Path("/game/currentState")
     public Response getCurrentState() {
-        final List<Player> players = gameService.getCurrentState();
-        return players != null && !players.isEmpty()
-            ? Response.ok(players).build()
-            : Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("No players").build();
+        return Response.ok(gameState).build();
     }
 
     @POST

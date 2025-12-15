@@ -1,10 +1,8 @@
 package com.clapped.main.startup;
 
-import com.clapped.main.messaging.events.GameEvent;
-import com.clapped.main.messaging.events.GameEvtType;
 import com.clapped.main.messaging.producer.GameEventProducer;
-import com.clapped.main.model.ProcessResult;
 import com.clapped.main.service.GameState;
+import com.clapped.pokemon.service.PokemonService;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -17,33 +15,22 @@ public class StartupListener {
 
     private final GameState gameState;
     private final GameEventProducer gameEventProducer;
+    private final PokemonService pokemonService;
 
     @Inject
-    public StartupListener(final GameState gameState, final GameEventProducer gameEventProducer) {
+    public StartupListener(final GameState gameState, final GameEventProducer gameEventProducer, final PokemonService pokemonService) {
         this.gameState = gameState;
         this.gameEventProducer = gameEventProducer;
+        this.pokemonService = pokemonService;
     }
 
     void init(@Observes final StartupEvent startupEvent) {
         log.info("\u001B[32mApplication Version: {}\u001B[0m", System.getenv("BUILD_VERSION"));
-        sendInitialGameInfo();
+        populateTypes();
     }
 
-    private void sendInitialGameInfo() {
-        int defaultGen = gameState.getPokemonGen().getNumericalVal();
-        gameEventProducer.sendGameEvent(new GameEvent(
-                System.currentTimeMillis(),
-                GameEvtType.GENERATION_CHANGE,
-                defaultGen,
-                ProcessResult.success("Initial generation set to " + defaultGen)
-        ));
-
-        int defaultLevel = gameState.getPokemonLevel();
-        gameEventProducer.sendGameEvent(new GameEvent(
-                System.currentTimeMillis(),
-                GameEvtType.LEVEL_CHANGE,
-                defaultLevel,
-                ProcessResult.success("Initial level set to " + defaultLevel)
-        ));
+    private void populateTypes() {
+        pokemonService.populateTypes();
     }
+
 }

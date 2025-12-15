@@ -5,6 +5,7 @@ import com.clapped.main.util.RandomProvider;
 import com.clapped.main.util.SecureRandomProvider;
 import com.clapped.pokemon.client.PokeClient;
 import com.clapped.pokemon.model.*;
+import com.clapped.pokemon.model.dto.NamedResource;
 import com.clapped.pokemon.model.dto.move.EffectChangeDto;
 import com.clapped.pokemon.model.dto.move.MoveDto;
 import com.clapped.pokemon.model.dto.move.MoveStatChangeDto;
@@ -13,6 +14,7 @@ import com.clapped.pokemon.model.dto.pokemon.PokemonDto;
 import com.clapped.pokemon.model.dto.pokemon.PokemonMove;
 import com.clapped.pokemon.model.dto.pokemon.PokemonStatDto;
 import com.clapped.pokemon.model.dto.pokemon.TypeSlotDto;
+import com.clapped.pokemon.model.dto.type.TypeDto;
 import com.clapped.pokemon.model.move.MoveDamageClass;
 import com.clapped.pokemon.model.move.MoveFlag;
 import com.clapped.pokemon.model.move.MoveStatChange;
@@ -48,8 +50,8 @@ public class PokemonService {
 
     public Pokemon getPokemonByIdOrName(final String identifier) {
         final Generation pokemonGen = Arrays.stream(Generation.values())
-                .filter(gen -> gen.getName().equals(client.getSpeciesInfoByIdOrName(identifier).getGeneration().getName()))
-                .findFirst().orElse(null);
+            .filter(gen -> gen.getName().equals(client.getSpeciesInfoByIdOrName(identifier).getGeneration().getName()))
+            .findFirst().orElse(null);
 
         if (pokemonGen == null || pokemonGen.getNumericalVal() > state.getPokemonGen().getNumericalVal()) {
             log.error("Requested pokemon '{}' is unavailable in the selected generation.", identifier);
@@ -60,7 +62,7 @@ public class PokemonService {
         log.info("Successfully retrieved '{}' from PokeAPI.", raw.getName());
 
         final long id = raw.getId();
-        final String img = getSpriteLink(raw);
+        final ImageLinks img = getSpriteLinks(raw);
         final String cries = raw.getCries().getLatest();
         final String name = raw.getName();
         final PokemonNature nature = getRandomNature();
@@ -71,25 +73,19 @@ public class PokemonService {
         return new Pokemon(id, img, cries, name, nature, types, moves, stats);
     }
 
-    private String getSpriteLink(final PokemonDto raw) {
-        if (state.isUseShowdownIcons()) {
-            return raw.getSprites().getOther().getShowdown().getFrontDefault();
-        }
-        String link = switch (state.getPokemonGen()) {
-            case I -> raw.getSprites().getVersions().getGenerationI().getYellow().getFrontDefault();
-            case II -> raw.getSprites().getVersions().getGenerationII().getCrystal().getFrontDefault();
-            case III -> raw.getSprites().getVersions().getGenerationIII().getFireRedLeafGreen().getFrontDefault();
-            case IV -> raw.getSprites().getVersions().getGenerationIV().getPlatinum().getFrontDefault();
-            case V -> raw.getSprites().getVersions().getGenerationV().getBlackWhite().getAnimated().getFrontDefault();
-            case VI -> raw.getSprites().getVersions().getGenerationVI().getXy().getFrontDefault();
-            case VII -> raw.getSprites().getVersions().getGenerationVII().getUltraSunUltraMoon().getFrontDefault();
-            case VIII -> raw.getSprites().getVersions().getGenerationVIII().getIcons().getFrontDefault();
-            default -> null;
-        };
-        if (link == null) {
-            link = raw.getSprites().getFrontDefault();
-        }
-        return link;
+    private ImageLinks getSpriteLinks(final PokemonDto raw) {
+        return new ImageLinks(
+            raw.getSprites().getFrontDefault(),
+            raw.getSprites().getOther().getShowdown().getFrontDefault(),
+            raw.getSprites().getVersions().getGenerationI().getYellow().getFrontDefault(),
+            raw.getSprites().getVersions().getGenerationII().getCrystal().getFrontDefault(),
+            raw.getSprites().getVersions().getGenerationIII().getFireRedLeafGreen().getFrontDefault(),
+            raw.getSprites().getVersions().getGenerationIV().getPlatinum().getFrontDefault(),
+            raw.getSprites().getVersions().getGenerationV().getBlackWhite().getAnimated().getFrontDefault(),
+            raw.getSprites().getVersions().getGenerationVI().getXy().getFrontDefault(),
+            raw.getSprites().getVersions().getGenerationVII().getUltraSunUltraMoon().getFrontDefault(),
+            raw.getSprites().getVersions().getGenerationVIII().getIcons().getFrontDefault()
+        );
     }
 
     private PokemonNature getRandomNature() {
@@ -99,70 +95,70 @@ public class PokemonService {
 
     private List<Type> getTypes(final List<TypeSlotDto> rawTypes) {
         return rawTypes.stream()
-                .map(typeSlotDto -> Type.valueOf(typeSlotDto.getType().getName().toUpperCase()))
-                .toList();
+            .map(typeSlotDto -> Type.valueOf(typeSlotDto.getType().getName().toUpperCase()))
+            .toList();
     }
 
     private List<Move> getMoves(final List<PokemonMove> moves) {
         final List<PokemonMove> movesInGen = moves.stream()
-                .filter(move -> move.getVersionGroupDetails().stream()
-                        .anyMatch(versionGroup -> state.getPokemonGen().getVersionGroups()
-                                .contains(versionGroup.getVersionGroup().getName())))
-                .toList();
+            .filter(move -> move.getVersionGroupDetails().stream()
+                .anyMatch(versionGroup -> state.getPokemonGen().getVersionGroups()
+                    .contains(versionGroup.getVersionGroup().getName())))
+            .toList();
 
         final List<PokemonMove> movesAtLevel = new ArrayList<>(movesInGen.stream()
-                .filter(move -> move.getVersionGroupDetails().getFirst().getLevelLearnedAt() <= state.getPokemonLevel())
-                .toList());
+            .filter(move -> move.getVersionGroupDetails().getFirst().getLevelLearnedAt() <= state.getPokemonLevel())
+            .toList());
 
         Collections.shuffle(movesAtLevel);
         final List<PokemonMove> randomFour = movesAtLevel.stream().limit(4).toList();
 
         return randomFour.stream()
-                .map(pokemonMove -> client.getMoveByIdOrName(pokemonMove.getMove().getName()))
-                .map(this::mapMove)
-                .toList();
+            .map(pokemonMove -> client.getMoveByIdOrName(pokemonMove.getMove().getName()))
+            .map(this::mapMove)
+            .toList();
     }
 
     private Move mapMove(final MoveDto raw) {
         final Move move = new Move()
-                .setId(raw.getId())
-                .setName(raw.getPrettyName())
+            .setId(raw.getId())
+            .setName(raw.getPrettyName())
 
-                .setAccuracy(raw.getAccuracy())
-                .setCurrentPp(raw.getPp())
-                .setBasePp(raw.getPp())
-                .setPriority(raw.getPriority())
-                .setPower(raw.getPower())
-                .setType(Type.fromName(raw.getType().getName()))
-                .setDamageClass(MoveDamageClass.fromName(raw.getDamageClass().getName()))
+            .setAccuracy(raw.getAccuracy())
+            .setCurrentPp(raw.getPp())
+            .setBasePp(raw.getPp())
+            .setPriority(raw.getPriority())
+            .setPower(raw.getPower())
+            .setType(Type.fromName(raw.getType().getName()))
+            .setDamageClass(MoveDamageClass.fromName(raw.getDamageClass().getName()))
 
-                .setTarget(MoveTarget.fromName(raw.getTarget().getName()))
+            .setTarget(MoveTarget.fromName(raw.getTarget().getName()))
 
-                .setDrain(raw.getMeta().getDrain())
-                .setHealing(raw.getMeta().getHealing())
-                .setFlinchChance(raw.getMeta().getFlinchChance())
+            .setDrain(raw.getMeta().getDrain())
+            .setHealing(raw.getMeta().getHealing())
+            .setFlinchChance(raw.getMeta().getFlinchChance())
 
-                .setMaxHits(raw.getMeta().getMaxHits())
-                .setMinHits(raw.getMeta().getMinHits())
+            .setMaxHits(raw.getMeta().getMaxHits())
+            .setMinHits(raw.getMeta().getMinHits())
 
-                .setMaxTurns(raw.getMeta().getMaxTurns())
-                .setMinTurns(raw.getMeta().getMinTurns())
+            .setMaxTurns(raw.getMeta().getMaxTurns())
+            .setMinTurns(raw.getMeta().getMinTurns())
 
-                .setInflictsAilment(Ailment.fromName(raw.getMeta().getAilment().getName()))
-                .setAilmentChance(raw.getMeta().getAilmentChance())
-                .setChangesStats(mapStatChanges(raw))
+            .setInflictsAilment(Ailment.fromName(raw.getMeta().getAilment().getName()))
+            .setAilmentChance(raw.getMeta().getAilmentChance())
+            .setChangesStats(mapStatChanges(raw))
 
-                .setMoveFlags(mapFlags(raw));
+            .setMoveFlags(mapFlags(raw));
 
         // TODO: overwrite values with gen-specific ones where possible
         final Optional<PastValueDto> selectedGenValues = raw.getPastValueDtos().stream()
-                .filter(pastValueDto -> state.getPokemonGen().getVersionGroups()
-                        .contains(pastValueDto.getVersionGroup().getName()))
-                .findFirst();
+            .filter(pastValueDto -> state.getPokemonGen().getVersionGroups()
+                .contains(pastValueDto.getVersionGroup().getName()))
+            .findFirst();
         final Optional<EffectChangeDto> selectedGenEffects = raw.getEffectChangeDtos().stream()
-                .filter(effectChangeDto -> state.getPokemonGen().getVersionGroups()
-                        .contains(effectChangeDto.getVersionGroup().getName()))
-                .findFirst();
+            .filter(effectChangeDto -> state.getPokemonGen().getVersionGroups()
+                .contains(effectChangeDto.getVersionGroup().getName()))
+            .findFirst();
 
         return move;
     }
@@ -171,11 +167,11 @@ public class PokemonService {
         final List<MoveStatChange> statChanges = new ArrayList<>();
         for (MoveStatChangeDto statChange : raw.getStatChanges()) {
             statChanges.add(
-                    new MoveStatChange(
-                            PokemonStat.fromName(statChange.getStat().getName()),
-                            statChange.getChange(),
-                            raw.getMeta().getStatChance()
-                    )
+                new MoveStatChange(
+                    PokemonStat.fromName(statChange.getStat().getName()),
+                    statChange.getChange(),
+                    raw.getMeta().getStatChance()
+                )
             );
         }
         return statChanges;
@@ -194,6 +190,49 @@ public class PokemonService {
             rawStatMap.put(pokemonStat, rawStat.getBaseStat());
         }
         return statCalculator.calculateStats(rawStatMap, nature);
+    }
+
+    public void populateTypes() {
+        for (Type type : Type.values()) {
+            final TypeDto dto = client.getTypeByIdOrName(type.getName());
+            type.setImgLinks(new ImageLinks(
+                sprite(dto, "generation-iii", "firered-leafgreen"),
+                null,
+                null,
+                null,
+                sprite(dto, "generation-iii", "firered-leafgreen"),
+                sprite(dto, "generation-iv", "platinum"),
+                sprite(dto, "generation-v", "black-2-white-2"),
+                sprite(dto, "generation-vi", "x-y"),
+                sprite(dto, "generation-vii", "ultra-sun-ultra-moon"),
+                sprite(dto, "generation-viii", "sword-shield")
+            ));
+            TypeDto.DamageRelations dr = dto.getDamageRelations();
+            if (dr != null) {
+                type.setImmuneAgainst(mapTypes(dr.getNoDamageTo()));
+                type.setIneffectiveAgainst(mapTypes(dr.getHalfDamageTo()));
+                type.setSuperEffectiveAgainst(mapTypes(dr.getDoubleDamageTo()));
+            }
+        }
+    }
+
+    private String sprite(TypeDto dto, String generation, String game) {
+        if (dto.getSprites() == null) {
+            return null;
+        }
+        return Optional.ofNullable(dto.getSprites().get(generation))
+            .map(gen -> gen.get(game))
+            .map(TypeDto.Sprite::getImgLink)
+            .orElse(null);
+    }
+
+    private List<Type> mapTypes(List<NamedResource> resources) {
+        return Optional.ofNullable(resources)
+            .orElse(List.of())
+            .stream()
+            .map(NamedResource::getName)
+            .map(Type::fromName)
+            .toList();
     }
 
 }

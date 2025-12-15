@@ -16,7 +16,7 @@ public class PlayerEventProducer {
     Emitter<PlayerEvent> emitter;
 
     public void sendPlayerEvent(final PlayerEvent evt) {
-        log.info("Sending new {} event: {}", evt.getEventType(), evt);
+        log.info("Sending new {} event: {}", evt.getPlayerEvtType(), evt);
         emitter.send(evt);
     }
 }

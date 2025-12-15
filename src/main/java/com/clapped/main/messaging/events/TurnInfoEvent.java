@@ -15,6 +15,7 @@ import java.util.Map;
 @NoArgsConstructor
 public class TurnInfoEvent {
     private long timestamp;
+    private EventType eventType;
     private Map<String, List<ActionType>> playerActionOptions;
     private ProcessResult result;
 }

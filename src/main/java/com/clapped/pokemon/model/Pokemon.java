@@ -18,7 +18,7 @@ import static com.clapped.pokemon.model.pokemon.PokemonStat.HP;
 @AllArgsConstructor
 public class Pokemon {
     private long id;
-    private String imgLink;
+    private ImageLinks imgLinks;
     private String criesLink;
     private String name;
     private PokemonNature nature;
@@ -33,9 +33,9 @@ public class Pokemon {
     private Move currentlyUsedMove;
     private int moveRemainingTurns; // how many turns are remaining on the multi-turn move
 
-    public Pokemon(long id, String imgLink, String criesLink, String name, PokemonNature nature, List<Type> types, List<Move> moves, EnumMap<PokemonStat, Integer> baseStats) {
+    public Pokemon(long id, ImageLinks imgLinks, String criesLink, String name, PokemonNature nature, List<Type> types, List<Move> moves, EnumMap<PokemonStat, Integer> baseStats) {
         this.id = id;
-        this.imgLink = imgLink;
+        this.imgLinks = imgLinks;
         this.criesLink = criesLink;
         this.name = name;
         this.nature = nature;
