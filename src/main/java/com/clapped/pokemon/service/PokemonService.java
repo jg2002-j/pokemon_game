@@ -62,7 +62,7 @@ public class PokemonService {
         log.info("Successfully retrieved '{}' from PokeAPI.", raw.getName());
 
         final long id = raw.getId();
-        final ImageLinks img = getSpriteLinks(raw);
+        final String spriteLink = getSpriteLink(raw);
         final String cries = raw.getCries().getLatest();
         final String name = raw.getName();
         final PokemonNature nature = getRandomNature();
@@ -70,22 +70,26 @@ public class PokemonService {
         final List<Move> moves = getMoves(raw.getMoves());
         final EnumMap<PokemonStat, Integer> stats = getBaseStats(raw.getStats(), nature);
 
-        return new Pokemon(id, img, cries, name, nature, types, moves, stats);
+        return new Pokemon(id, spriteLink, cries, name, nature, types, moves, stats);
     }
 
-    private ImageLinks getSpriteLinks(final PokemonDto raw) {
-        return new ImageLinks(
-            raw.getSprites().getFrontDefault(),
-            raw.getSprites().getOther().getShowdown().getFrontDefault(),
-            raw.getSprites().getVersions().getGenerationI().getYellow().getFrontDefault(),
-            raw.getSprites().getVersions().getGenerationII().getCrystal().getFrontDefault(),
-            raw.getSprites().getVersions().getGenerationIII().getFireRedLeafGreen().getFrontDefault(),
-            raw.getSprites().getVersions().getGenerationIV().getPlatinum().getFrontDefault(),
-            raw.getSprites().getVersions().getGenerationV().getBlackWhite().getAnimated().getFrontDefault(),
-            raw.getSprites().getVersions().getGenerationVI().getXy().getFrontDefault(),
-            raw.getSprites().getVersions().getGenerationVII().getUltraSunUltraMoon().getFrontDefault(),
-            raw.getSprites().getVersions().getGenerationVIII().getIcons().getFrontDefault()
-        );
+    private String getSpriteLink(final PokemonDto raw) {
+        if (state.isUseShowdownIcons()) {
+            return raw.getSprites().getOther().getShowdown().getFrontDefault();
+        } else {
+            return switch (state.getPokemonGen()) {
+                case I -> raw.getSprites().getVersions().getGenerationI().getYellow().getFrontDefault();
+                case II -> raw.getSprites().getVersions().getGenerationII().getCrystal().getFrontDefault();
+                case III -> raw.getSprites().getVersions().getGenerationIII().getFireRedLeafGreen().getFrontDefault();
+                case IV -> raw.getSprites().getVersions().getGenerationIV().getPlatinum().getFrontDefault();
+                case V ->
+                    raw.getSprites().getVersions().getGenerationV().getBlackWhite().getAnimated().getFrontDefault();
+                case VI -> raw.getSprites().getVersions().getGenerationVI().getXy().getFrontDefault();
+                case VII -> raw.getSprites().getVersions().getGenerationVII().getUltraSunUltraMoon().getFrontDefault();
+                case VIII -> raw.getSprites().getVersions().getGenerationVIII().getIcons().getFrontDefault();
+                default -> raw.getSprites().getFrontDefault();
+            };
+        }
     }
 
     private PokemonNature getRandomNature() {
@@ -131,6 +135,7 @@ public class PokemonService {
             .setPower(raw.getPower())
             .setType(Type.fromName(raw.getType().getName()))
             .setDamageClass(MoveDamageClass.fromName(raw.getDamageClass().getName()))
+            .setTextDesc(raw.getEffectEntries().getFirst().getShortEffect())
 
             .setTarget(MoveTarget.fromName(raw.getTarget().getName()))
 
@@ -192,21 +197,10 @@ public class PokemonService {
         return statCalculator.calculateStats(rawStatMap, nature);
     }
 
-    public void populateTypes() {
+    public void populateAllTypes() {
         for (Type type : Type.values()) {
             final TypeDto dto = client.getTypeByIdOrName(type.getName());
-            type.setImgLinks(new ImageLinks(
-                sprite(dto, "generation-iii", "firered-leafgreen"),
-                null,
-                null,
-                null,
-                sprite(dto, "generation-iii", "firered-leafgreen"),
-                sprite(dto, "generation-iv", "platinum"),
-                sprite(dto, "generation-v", "black-2-white-2"),
-                sprite(dto, "generation-vi", "x-y"),
-                sprite(dto, "generation-vii", "ultra-sun-ultra-moon"),
-                sprite(dto, "generation-viii", "sword-shield")
-            ));
+            type.setImgLink(getTypeIcon(dto));
             TypeDto.DamageRelations dr = dto.getDamageRelations();
             if (dr != null) {
                 type.setImmuneAgainst(mapTypes(dr.getNoDamageTo()));
@@ -214,6 +208,17 @@ public class PokemonService {
                 type.setSuperEffectiveAgainst(mapTypes(dr.getDoubleDamageTo()));
             }
         }
+    }
+
+    private String getTypeIcon(final TypeDto dto) {
+        return switch (state.getPokemonGen()) {
+            case IV -> sprite(dto, "generation-iv", "platinum");
+            case V -> sprite(dto, "generation-v", "black-2-white-2");
+            case VI -> sprite(dto, "generation-vi", "x-y");
+            case VII -> sprite(dto, "generation-vii", "ultra-sun-ultra-moon");
+            case VIII -> sprite(dto, "generation-viii", "sword-shield");
+            default -> sprite(dto, "generation-iii", "firered-leafgreen");
+        };
     }
 
     private String sprite(TypeDto dto, String generation, String game) {

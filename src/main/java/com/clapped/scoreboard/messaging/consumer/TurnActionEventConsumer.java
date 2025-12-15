@@ -8,12 +8,12 @@ import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 @Slf4j
 @ApplicationScoped
-public class TurnEventConsumer {
+public class TurnActionEventConsumer {
 
     private final EventsHandler eventsHandler;
 
     @Inject
-    public TurnEventConsumer(final EventsHandler eventsHandler) {
+    public TurnActionEventConsumer(final EventsHandler eventsHandler) {
         this.eventsHandler = eventsHandler;
     }
 

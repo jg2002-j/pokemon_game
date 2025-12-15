@@ -1,10 +1,13 @@
 package com.clapped.pokemon.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
 
+@JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum Type {
     NORMAL("normal"),
     FIRE("fire"),
@@ -28,13 +31,20 @@ public enum Type {
 
     @Getter
     private final String name;
-    @Getter @Setter
-    private ImageLinks imgLinks;
-    @Getter @Setter
+    @Getter
+    @Setter
+    private String imgLink;
+    @Getter
+    @Setter
+    @JsonIgnore
     private List<Type> superEffectiveAgainst;
-    @Getter @Setter
+    @Getter
+    @Setter
+    @JsonIgnore
     private List<Type> ineffectiveAgainst;
-    @Getter @Setter
+    @Getter
+    @Setter
+    @JsonIgnore
     private List<Type> immuneAgainst;
 
     Type(final String name) {

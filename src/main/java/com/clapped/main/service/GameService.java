@@ -26,53 +26,68 @@ public class GameService {
         this.gameEventProducer = gameEventProducer;
     }
 
+    private boolean isGameSettingsUnlocked() {
+        return state.getAllPlayers().isEmpty();
+    }
+
     public ProcessResult changeGlobalLevel(final int newLvl) {
-        if (newLvl <= 100 && newLvl > 0) {
-            state.setPokemonLevel(newLvl);
-            gameEventProducer.sendGameEvent(new GameEvent(
+        if (isGameSettingsUnlocked()) {
+            if (newLvl <= 100 && newLvl > 0) {
+                state.setPokemonLevel(newLvl);
+                gameEventProducer.sendGameEvent(new GameEvent(
                     System.currentTimeMillis(),
                     EventType.GAME_EVENT,
                     GameEvtType.LEVEL_CHANGE,
                     newLvl,
                     ProcessResult.success("Pokemon Level successfully updated to " + newLvl)
-            ));
-            return ProcessResult.success("Pokemon level now set to " + newLvl);
-        } else {
-            return ProcessResult.error("Please choose a level between 1 and 100 (inclusive).");
+                ));
+                return ProcessResult.success("Pokemon level now set to " + newLvl);
+            } else {
+                return ProcessResult.error("Please choose a level between 1 and 100 (inclusive).");
+            }
         }
+        return ProcessResult.error("Pokemon level cannot be changed now.");
     }
 
     public ProcessResult changeGlobalGen(final int gen) {
-        final Optional<Generation> newGenerationChoice = Arrays.stream(Generation.values())
+        if (isGameSettingsUnlocked()) {
+            final Optional<Generation> newGenerationChoice = Arrays.stream(Generation.values())
                 .filter(generation -> generation.getNumericalVal() == gen)
                 .findFirst();
-        if (newGenerationChoice.isPresent()) {
-            final Generation newGeneration = newGenerationChoice.get();
-            state.setPokemonGen(newGeneration);
-            final ProcessResult res = ProcessResult.success("Pokemon Generation now set to " + newGeneration);
-            gameEventProducer.sendGameEvent(new GameEvent(
+            if (newGenerationChoice.isPresent()) {
+                final Generation newGeneration = newGenerationChoice.get();
+                state.setPokemonGen(newGeneration);
+                final ProcessResult res = ProcessResult.success("Pokemon Generation now set to " + newGeneration);
+                gameEventProducer.sendGameEvent(new GameEvent(
                     System.currentTimeMillis(),
                     EventType.GAME_EVENT,
                     GameEvtType.GENERATION_CHANGE,
                     newGeneration.getNumericalVal(),
                     res
-            ));
-            return res;
+                ));
+                return res;
+            }
+            return ProcessResult.error("Invalid option, please choose a generation between 1 and 9.");
         }
-        return ProcessResult.error("Invalid option, please choose a generation between 1 and 9.");
+        return ProcessResult.error("Pokemon generation cannot be changed now.");
     }
 
     public ProcessResult toggleShowdownIcons(final boolean show) {
-        state.setUseShowdownIcons(show);
-        return ProcessResult.success("Showdown icons are now toggled " + (show ? "on" : "off") + ". Note: this only affects newly added Pokemon.");
+        if (isGameSettingsUnlocked()) {
+            state.setUseShowdownIcons(show);
+            return ProcessResult.success("Showdown icons are now toggled " + (show ? "on" : "off"));
+        }
+        return ProcessResult.error("Pokemon icons cannot be changed now.");
     }
 
     public ProcessResult finaliseTeams() {
-        if (turnService.getTurnNum() == 0) {
-            return turnService.startTurn();
-        } else {
+        if (turnService.getTurnNum() > 0) {
             return ProcessResult.error("Game already started, all players must submit turn options to move to the next turn.");
         }
+        if (state.getAllPlayers().size() < 2) {
+            return ProcessResult.error("Please add 2 or more players.");
+        }
+        return turnService.startTurn();
     }
 
 }

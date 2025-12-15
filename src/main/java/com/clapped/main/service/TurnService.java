@@ -26,16 +26,15 @@ import static com.clapped.pokemon.model.pokemon.PokemonStat.SPEED;
 public class TurnService {
 
     private static final String ERROR_PREFIX = "ERROR: ";
-    private final TurnInfoEventProducer turnInfoEventProducer;
     @Getter
     private int turnNum = 0;
-
     private final List<PlayerAction> queuedActions = new ArrayList<>();
     private final Map<String, List<ActionType>> playerActionChoices = new HashMap<>();
 
     private final GameState gameState;
     private final BattleEngine battleEngine;
 
+    private final TurnInfoEventProducer turnInfoEventProducer;
     private final GameEventProducer gameEventProducer;
 
     @Inject

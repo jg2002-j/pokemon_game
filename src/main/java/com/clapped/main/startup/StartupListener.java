@@ -30,7 +30,7 @@ public class StartupListener {
     }
 
     private void populateTypes() {
-        pokemonService.populateTypes();
+        pokemonService.populateAllTypes();
     }
 
 }

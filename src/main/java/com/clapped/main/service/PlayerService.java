@@ -40,7 +40,6 @@ public class PlayerService {
 
     public ProcessResult join(final PlayerDto dto) {
         try {
-
             final String username = dto.username();
             final int teamNum = dto.teamNum();
             final List<String> pokemonIds = Stream.of(

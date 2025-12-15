@@ -27,6 +27,7 @@ public class Move {
     private Integer power;
     private Type type; // normal, fighting, flying, etc.
     private MoveDamageClass damageClass; // physical, special, status
+    private String textDesc;
 
     private MoveTarget target;
 

@@ -2,6 +2,7 @@ package com.clapped.pokemon.model;
 
 import com.clapped.pokemon.model.pokemon.PokemonNature;
 import com.clapped.pokemon.model.pokemon.PokemonStat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,7 +19,7 @@ import static com.clapped.pokemon.model.pokemon.PokemonStat.HP;
 @AllArgsConstructor
 public class Pokemon {
     private long id;
-    private ImageLinks imgLinks;
+    private String spriteLink;
     private String criesLink;
     private String name;
     private PokemonNature nature;
@@ -28,14 +29,15 @@ public class Pokemon {
 
     private EnumMap<PokemonStat, Integer> currentStats;
     private Ailment currentAilment;
+    @JsonIgnore
     private int ailmentRemainingTurns;
 
     private Move currentlyUsedMove;
     private int moveRemainingTurns; // how many turns are remaining on the multi-turn move
 
-    public Pokemon(long id, ImageLinks imgLinks, String criesLink, String name, PokemonNature nature, List<Type> types, List<Move> moves, EnumMap<PokemonStat, Integer> baseStats) {
+    public Pokemon(long id, String spriteLink, String criesLink, String name, PokemonNature nature, List<Type> types, List<Move> moves, EnumMap<PokemonStat, Integer> baseStats) {
         this.id = id;
-        this.imgLinks = imgLinks;
+        this.spriteLink = spriteLink;
         this.criesLink = criesLink;
         this.name = name;
         this.nature = nature;
