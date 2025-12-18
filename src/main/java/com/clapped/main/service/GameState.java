@@ -16,11 +16,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class GameState {
 
     @Setter
-    private boolean useShowdownIcons = false;
-    @Setter
     private int pokemonLevel = 50;
     @Setter
-    private Generation pokemonGen = Generation.IV;
+    private Generation pokemonGen = Generation.V;
 
     private final Map<String, Player> players = new ConcurrentHashMap<>();
 

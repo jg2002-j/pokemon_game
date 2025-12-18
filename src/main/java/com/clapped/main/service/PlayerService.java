@@ -16,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 @Slf4j
 @ApplicationScoped
@@ -42,9 +41,7 @@ public class PlayerService {
         try {
             final String username = dto.username();
             final int teamNum = dto.teamNum();
-            final List<String> pokemonIds = Stream.of(
-                    dto.slot1(), dto.slot2(), dto.slot3(), dto.slot4(), dto.slot5(), dto.slot6()
-            ).filter(Objects::nonNull).toList();
+            final List<String> pokemonIds = dto.pkmnTeam().stream().filter(Objects::nonNull).toList();
 
             ProcessResult invalidPlayerInfoOutcome = validatePlayerInfo(username, teamNum);
             if (invalidPlayerInfoOutcome != null) return invalidPlayerInfoOutcome;

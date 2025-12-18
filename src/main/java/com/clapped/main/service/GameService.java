@@ -1,5 +1,6 @@
 package com.clapped.main.service;
 
+import com.clapped.boundary.rest.dto.GameSettingsDto;
 import com.clapped.main.messaging.events.EventType;
 import com.clapped.main.messaging.events.GameEvent;
 import com.clapped.main.messaging.events.GameEvtType;
@@ -8,10 +9,13 @@ import com.clapped.main.model.ProcessResult;
 import com.clapped.pokemon.model.Generation;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @ApplicationScoped
 public class GameService {
 
@@ -30,7 +34,15 @@ public class GameService {
         return state.getAllPlayers().isEmpty();
     }
 
-    public ProcessResult changeGlobalLevel(final int newLvl) {
+    public List<ProcessResult> updateSettings(final GameSettingsDto dto) {
+        log.info("{}", dto);
+        return List.of(
+            changeGlobalLevel(dto.getLevel()),
+            changeGlobalGen(dto.getGen())
+        );
+    }
+
+    private ProcessResult changeGlobalLevel(final int newLvl) {
         if (isGameSettingsUnlocked()) {
             if (newLvl <= 100 && newLvl > 0) {
                 state.setPokemonLevel(newLvl);
@@ -49,7 +61,7 @@ public class GameService {
         return ProcessResult.error("Pokemon level cannot be changed now.");
     }
 
-    public ProcessResult changeGlobalGen(final int gen) {
+    private ProcessResult changeGlobalGen(final int gen) {
         if (isGameSettingsUnlocked()) {
             final Optional<Generation> newGenerationChoice = Arrays.stream(Generation.values())
                 .filter(generation -> generation.getNumericalVal() == gen)
@@ -70,14 +82,6 @@ public class GameService {
             return ProcessResult.error("Invalid option, please choose a generation between 1 and 9.");
         }
         return ProcessResult.error("Pokemon generation cannot be changed now.");
-    }
-
-    public ProcessResult toggleShowdownIcons(final boolean show) {
-        if (isGameSettingsUnlocked()) {
-            state.setUseShowdownIcons(show);
-            return ProcessResult.success("Showdown icons are now toggled " + (show ? "on" : "off"));
-        }
-        return ProcessResult.error("Pokemon icons cannot be changed now.");
     }
 
     public ProcessResult finaliseTeams() {

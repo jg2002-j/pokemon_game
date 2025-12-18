@@ -19,9 +19,6 @@ public class EventsHandler {
     public void onOpen(final Session session) {
         log.info("Client connected: {}", session.getId());
         sessions.put(session.getId(), session);
-
-        // TODO: Send current state
-
     }
 
 

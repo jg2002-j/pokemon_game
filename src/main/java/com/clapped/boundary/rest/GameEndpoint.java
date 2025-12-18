@@ -1,5 +1,6 @@
 package com.clapped.boundary.rest;
 
+import com.clapped.boundary.rest.dto.GameSettingsDto;
 import com.clapped.boundary.rest.dto.PlayerDto;
 import com.clapped.main.model.ProcessResult;
 import com.clapped.main.service.GameService;
@@ -13,6 +14,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,12 +46,6 @@ public class GameEndpoint {
         this.randomProvider = randomProvider;
     }
 
-    @GET
-    @Path("/game/currentState")
-    public Response getCurrentState() {
-        return Response.ok(gameState).build();
-    }
-
     @POST
     @Path("/game/finaliseTeams")
     public Response finaliseTeams() {
@@ -59,31 +55,13 @@ public class GameEndpoint {
                 : Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(result.getMessage()).build();
     }
 
-    @PATCH
-    @Path("/settings/changeLevel/{newLevel}")
-    public Response changeLevel(@PathParam("newLevel") int newLevel) {
-        final ProcessResult result = gameService.changeGlobalLevel(newLevel);
-        return result.isSuccess()
-                ? Response.ok(result.getMessage()).build()
-                : Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(result.getMessage()).build();
-    }
-
-    @PATCH
-    @Path("/settings/changeGeneration/{newGen}")
-    public Response changeGeneration(@PathParam("newGen") int newGen) {
-        final ProcessResult result = gameService.changeGlobalGen(newGen);
-        return result.isSuccess()
-                ? Response.ok(result.getMessage()).build()
-                : Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(result.getMessage()).build();
-    }
-
-    @PATCH
-    @Path("/settings/toggleShowdownIcons/{on}")
-    public Response toggleShowdownIcons(@PathParam("on") boolean on) {
-        final ProcessResult result = gameService.toggleShowdownIcons(on);
-        return result.isSuccess()
-                ? Response.ok(result.getMessage()).build()
-                : Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(result.getMessage()).build();
+    @POST
+    @Path("/settings/update")
+    public Response updateSettings(@RequestBody GameSettingsDto dto) {
+        final List<ProcessResult> results = gameService.updateSettings(dto);
+        return results.stream().allMatch(ProcessResult::isSuccess)
+            ? Response.ok(results.stream().map(ProcessResult::getMessage).toList()).build()
+            : Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(results.stream().map(ProcessResult::getMessage).toList()).build();
     }
 
     @GET
@@ -102,12 +80,14 @@ public class GameEndpoint {
             final PlayerDto playerDto = new PlayerDto(
                     "player" + i,
                     teamNum,
-                    getRandomPokemonId(),
-                    getRandomPokemonId(),
-                    getRandomPokemonId(),
-                    getRandomPokemonId(),
-                    getRandomPokemonId(),
-                    getRandomPokemonId()
+                    List.of(
+                        getRandomPokemonId(),
+                        getRandomPokemonId(),
+                        getRandomPokemonId(),
+                        getRandomPokemonId(),
+                        getRandomPokemonId(),
+                        getRandomPokemonId()
+                    )
             );
             final ProcessResult result = playerService.join(playerDto);
             results.add(result);
