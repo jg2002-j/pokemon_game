@@ -14,6 +14,10 @@ public class Player {
     @Getter
     @Setter
     private String username;
+@Getter
+@Setter
+private String avatarUrl;
+
     @Getter
     @Setter
     private int teamNum;
@@ -24,8 +28,9 @@ public class Player {
     @Getter
     private int activePokemonIndex;
 
-    public Player(final String username, final int teamNum, final LinkedList<Pokemon> pokemonTeam) {
+    public Player(final String username, final String avatarUrl, final int teamNum, final LinkedList<Pokemon> pokemonTeam) {
         this.username = username;
+        this.avatarUrl = avatarUrl;
         this.teamNum = teamNum;
         setPokemonTeam(pokemonTeam);
         activePokemonIndex = 0;

@@ -79,6 +79,7 @@ public class GameEndpoint {
         for (int i = 0; i < 10; i++) {
             final PlayerDto playerDto = new PlayerDto(
                     "player" + i,
+                    "https://play.pokemonshowdown.com/sprites/trainers/red.png",
                     teamNum,
                     List.of(
                         getRandomPokemonId(),

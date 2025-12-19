@@ -41,9 +41,9 @@ public class PlayerService {
         try {
             final String username = dto.username();
             final int teamNum = dto.teamNum();
-            final List<String> pokemonIds = dto.pkmnTeam().stream().filter(Objects::nonNull).toList();
+            final List<String> pokemonIds = dto.pkmnTeam().stream().filter(Objects::nonNull).filter((id) -> !id.isBlank()).toList();
 
-            ProcessResult invalidPlayerInfoOutcome = validatePlayerInfo(username, teamNum);
+            ProcessResult invalidPlayerInfoOutcome = validatePlayerInfo(dto);
             if (invalidPlayerInfoOutcome != null) return invalidPlayerInfoOutcome;
 
             final LinkedList<Pokemon> pokemonTeam = new LinkedList<>();
@@ -59,6 +59,7 @@ public class PlayerService {
 
             final Player player = new Player(
                     username,
+                    dto.avatarUrl(),
                     teamNum,
                     pokemonTeam
             );
@@ -79,15 +80,24 @@ public class PlayerService {
         }
     }
 
-    private ProcessResult validatePlayerInfo(String username, int teamNum) {
+    private ProcessResult validatePlayerInfo(final PlayerDto dto) {
+        final String username = dto.username();
+        final int teamNum = dto.teamNum();
+        final List<String> pkmnTeamStrings = dto.pkmnTeam();
         if (teamNum != 1 && teamNum != 2) {
             return ProcessResult.error("Invalid team number (" + teamNum + "); ignoring JOIN");
+        }
+        if (username.isBlank()) {
+            return ProcessResult.error("Username must not be blank");
         }
         if (gameState.getPlayersForTeam(teamNum).size() >= 5) {
             return ProcessResult.error("Team " + teamNum + " is already full; ignoring JOIN");
         }
         if (gameState.hasPlayer(username)) {
             return ProcessResult.error(username + " already in the game; ignoring JOIN");
+        }
+        if (pkmnTeamStrings == null || pkmnTeamStrings.isEmpty() || pkmnTeamStrings.stream().allMatch(String::isBlank)) {
+            return ProcessResult.error("Pokemon team must not be empty or blank.");
         }
         return null;
     }
