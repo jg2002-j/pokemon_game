@@ -1,7 +1,9 @@
 package com.clapped.pokemon.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -49,6 +51,14 @@ public enum Type {
 
     Type(final String name) {
         this.name = name;
+    }
+
+    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+    public static Type fromJson(@JsonProperty(value = "name", required = true) final String name) {
+        if (name == null || name.isBlank()) {
+            return UNKNOWN;
+        }
+        return fromName(name);
     }
 
     public static Type fromName(String name) {

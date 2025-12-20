@@ -1,5 +1,6 @@
 package com.clapped.scoreboard.ws;
 
+import com.clapped.main.model.ProcessResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -9,6 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.clapped.scoreboard.ws.WsMsgType.ERROR;
+import static com.clapped.scoreboard.ws.WsMsgType.STATE_UPDATE;
 
 @Slf4j
 @ApplicationScoped
@@ -57,7 +61,13 @@ public class EventsHandler {
         });
     }
 
-    public void broadcastState(final WsMessageWrapper msg) {
+    public void broadcastState(final StateSnapshot state, final ProcessResult result) {
+        final WsMessageWrapper msg = new WsMessageWrapper(
+                1,
+                result.isSuccess() ? STATE_UPDATE : ERROR,
+                state,
+                result
+        );
         sessions.values().forEach(session -> {
             session.getAsyncRemote().sendText(toJson(msg));
         });

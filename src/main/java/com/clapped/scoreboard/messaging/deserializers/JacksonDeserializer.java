@@ -8,26 +8,6 @@ import org.apache.kafka.common.serialization.Deserializer;
 import java.io.IOException;
 import java.util.Map;
 
-/**
- * Generic Jackson-based deserializer for Kafka.
- * <p>
- * Usage: Create a concrete subclass that passes the target class to the constructor.
- * <pre>
- * public class PlayerEventDeserializer extends JacksonDeserializer&lt;PlayerEvent&gt; {
- *     public PlayerEventDeserializer() {
- *         super(PlayerEvent.class);
- *     }
- * }
- * </pre>
- * <p>
- * Alternatively, configure via properties:
- * <pre>
- * mp.messaging.incoming.my-channel.value.deserializer=com.lgim.main.messaging.serdes.JacksonDeserializer
- * mp.messaging.incoming.my-channel.value.deserializer.type=com.lgim.main.messaging.events.PlayerEvent
- * </pre>
- *
- * @param <T> The type to deserialize to
- */
 public class JacksonDeserializer<T> implements Deserializer<T> {
 
     private static final String TYPE_CONFIG_KEY = "value.deserializer.type";
@@ -35,22 +15,14 @@ public class JacksonDeserializer<T> implements Deserializer<T> {
     private final ObjectMapper mapper;
     private Class<T> targetType;
 
-    /**
-     * Constructor for subclasses that know their target type.
-     *
-     * @param targetType the class to deserialize to
-     */
     protected JacksonDeserializer(Class<T> targetType) {
-        this.mapper = new ObjectMapper();
+        this.mapper = new ObjectMapper().findAndRegisterModules();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         this.targetType = targetType;
     }
 
-    /**
-     * Default constructor for when type is configured via properties.
-     */
     public JacksonDeserializer() {
-        this.mapper = new ObjectMapper();
+        this.mapper = new ObjectMapper().findAndRegisterModules();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
@@ -83,4 +55,3 @@ public class JacksonDeserializer<T> implements Deserializer<T> {
         }
     }
 }
-

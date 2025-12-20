@@ -10,7 +10,7 @@ public class JacksonSerializer<T> implements Serializer<T> {
     private final ObjectMapper mapper;
 
     public JacksonSerializer() {
-        this.mapper = new ObjectMapper();
+        this.mapper = new ObjectMapper().findAndRegisterModules();
     }
 
     @Override

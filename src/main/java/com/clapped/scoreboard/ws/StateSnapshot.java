@@ -17,14 +17,14 @@ import java.util.Map;
 @Accessors(chain = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class StateDto {
+public class StateSnapshot {
     private Generation pkmnGen;
     private int pkmnLvl;
     private int turnNum;
     private Map<String, Player> players;
     private Map<String, List<ActionType>> playerTurnOptions;
 
-    public static StateDto from(final ScoreboardState state) {
+    public static StateSnapshot from(final ScoreboardState state) {
         final Map<String, Player> players = state.getPlayers() == null
                 ? Map.of()
                 : Map.copyOf(state.getPlayers());
@@ -39,7 +39,7 @@ public class StateDto {
             turnOptions = Map.copyOf(tmp);
         }
 
-        return new StateDto(
+        return new StateSnapshot(
                 state.getPkmnGen(),
                 state.getPkmnLvl(),
                 state.getTurnNum(),

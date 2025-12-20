@@ -11,6 +11,6 @@ import lombok.NoArgsConstructor;
 public class WsMessageWrapper {
     private int version;
     private WsMsgType type;
-    private StateDto payload;
+    private StateSnapshot payload;
     private ProcessResult result;
 }
