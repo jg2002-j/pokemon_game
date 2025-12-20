@@ -1,6 +1,8 @@
 package com.clapped.scoreboard.ws;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.websocket.*;
 import jakarta.websocket.server.ServerEndpoint;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +14,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @ApplicationScoped
 @ServerEndpoint("/scoreboard")
 public class EventsHandler {
+
+    @Inject
+    ObjectMapper objectMapper;
 
     private final Map<String, Session> sessions = new ConcurrentHashMap<>();
 
@@ -30,8 +35,11 @@ public class EventsHandler {
 
     @OnError
     public void onError(final Session session, final Throwable error) {
-        log.error("Error: {}", error.getMessage());
-        sessions.remove(session.getId());
+        final String sessionId = session != null ? session.getId() : "<null>";
+        log.error("WebSocket error (sessionId={}):", sessionId, error);
+        if (session != null) {
+            sessions.remove(session.getId());
+        }
     }
 
     @OnMessage
@@ -49,5 +57,19 @@ public class EventsHandler {
         });
     }
 
-}
+    public void broadcastState(final WsMessageWrapper msg) {
+        sessions.values().forEach(session -> {
+            session.getAsyncRemote().sendText(toJson(msg));
+        });
+    }
 
+    private String toJson(final WsMessageWrapper msg) {
+        try {
+            return objectMapper.writeValueAsString(msg);
+        } catch (Exception e) {
+            log.error("Failed to serialize: ", e);
+            return "SERVER-SIDE ERROR";
+        }
+    }
+
+}

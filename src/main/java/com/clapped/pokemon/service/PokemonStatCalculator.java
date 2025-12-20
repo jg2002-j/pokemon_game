@@ -57,7 +57,7 @@ public class PokemonStatCalculator {
             }
 
             if (stat == PokemonStat.HP) {
-                if (state.getPokemonGen().getNumericalVal() >= 3) {
+                if (state.getPokemonGen().getNumber() >= 3) {
                     finalStats.put(stat, calculateHPGen3Plus(base, state.getPokemonLevel()));
                 } else {
                     finalStats.put(stat, calculateHPGen1_2(base, state.getPokemonLevel()));
@@ -65,7 +65,7 @@ public class PokemonStatCalculator {
             } else if (stat == PokemonStat.ACCURACY || stat == PokemonStat.EVASION) {
                 finalStats.put(stat, 100); // Placeholder for percentage-based stats
             } else {
-                if (state.getPokemonGen().getNumericalVal() >= 3) {
+                if (state.getPokemonGen().getNumber() >= 3) {
                     finalStats.put(stat, calculateOtherStatGen3Plus(base, state.getPokemonLevel(), natureModifier));
                 } else {
                     finalStats.put(stat, calculateOtherStatGen1_2(base, state.getPokemonLevel()));

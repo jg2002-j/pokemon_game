@@ -7,6 +7,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.util.LinkedList;
+import java.util.Objects;
 
 @NoArgsConstructor
 @Accessors(chain = true)
@@ -45,5 +46,12 @@ private String avatarUrl;
             throw new IllegalArgumentException("Maximum team size is 6");
         }
         this.pokemonTeam = pokemonTeam;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Player player = (Player) o;
+        return Objects.equals(username, player.username);
     }
 }

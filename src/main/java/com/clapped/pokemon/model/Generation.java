@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Getter
@@ -21,9 +22,13 @@ public enum Generation {
     IX("generation-ix", 9, List.of("scarlet-violet", "the-teal-mask", "the-indigo-disk"), 1025),
     X("generation-x", 10, List.of("legends-za"), 1025); // Placeholder, same as Gen IX until new data is available
 
-    private String name;
-    private int numericalVal;
+    private String slug;
+    private int number;
     private List<String> versionGroups;
     private int numPokemonInGen;
+
+    public static Generation fromNum(final int num) {
+        return Arrays.stream(values()).filter((gen) -> gen.number == num).findFirst().orElse(null);
+    }
 
 }

@@ -1,26 +1,24 @@
 package com.clapped.scoreboard.messaging.consumer;
 
-import com.clapped.scoreboard.ws.EventsHandler;
+import com.clapped.main.messaging.events.PlayerEvent;
+import com.clapped.scoreboard.ScoreboardService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 
-@Slf4j
 @ApplicationScoped
 public class PlayerEventConsumer {
 
-    private final EventsHandler eventsHandler;
+    private final ScoreboardService service;
 
     @Inject
-    public PlayerEventConsumer(final EventsHandler eventsHandler) {
-        this.eventsHandler = eventsHandler;
+    public PlayerEventConsumer(final ScoreboardService service) {
+        this.service = service;
     }
 
     @Incoming("player-in")
-    public void consume(final String evt) {
-//        log.info("Received {} event from Kafka: {}", evt.getEventType(), evt);
-        eventsHandler.broadcast(evt);
+    public void consume(final PlayerEvent evt) {
+        service.handlePlayerEvent(evt);
     }
 
 }

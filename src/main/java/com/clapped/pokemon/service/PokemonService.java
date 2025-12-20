@@ -52,10 +52,10 @@ public class PokemonService {
 
     public Pokemon getPokemonByIdOrName(final String identifier) {
         final Generation pokemonGen = Arrays.stream(Generation.values())
-            .filter(gen -> gen.getName().equals(client.getSpeciesInfoByIdOrName(identifier).getGeneration().getName()))
+            .filter(gen -> gen.getSlug().equals(client.getSpeciesInfoByIdOrName(identifier).getGeneration().getName()))
             .findFirst().orElse(null);
 
-        if (pokemonGen == null || pokemonGen.getNumericalVal() > state.getPokemonGen().getNumericalVal()) {
+        if (pokemonGen == null || pokemonGen.getNumber() > state.getPokemonGen().getNumber()) {
             log.error("Requested pokemon '{}' is unavailable in the selected generation.", identifier);
             throw new BadRequestException("This Pokemon isn't available in the selected generation.");
         }

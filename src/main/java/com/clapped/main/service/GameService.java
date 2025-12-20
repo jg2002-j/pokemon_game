@@ -64,7 +64,7 @@ public class GameService {
     private ProcessResult changeGlobalGen(final int gen) {
         if (isGameSettingsUnlocked()) {
             final Optional<Generation> newGenerationChoice = Arrays.stream(Generation.values())
-                .filter(generation -> generation.getNumericalVal() == gen)
+                .filter(generation -> generation.getNumber() == gen)
                 .findFirst();
             if (newGenerationChoice.isPresent()) {
                 final Generation newGeneration = newGenerationChoice.get();
@@ -74,7 +74,7 @@ public class GameService {
                     System.currentTimeMillis(),
                     EventType.GAME_EVENT,
                     GameEvtType.GENERATION_CHANGE,
-                    newGeneration.getNumericalVal(),
+                    newGeneration.getNumber(),
                     res
                 ));
                 return res;
