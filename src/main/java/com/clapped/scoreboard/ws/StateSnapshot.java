@@ -2,23 +2,20 @@ package com.clapped.scoreboard.ws;
 
 import com.clapped.main.model.ActionType;
 import com.clapped.main.model.Player;
-import com.clapped.pokemon.model.Generation;
 import com.clapped.scoreboard.ScoreboardState;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Data
-@Accessors(chain = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class StateSnapshot {
-    private Generation pkmnGen;
+    private int pkmnGen;
     private int pkmnLvl;
     private int turnNum;
     private Map<String, Player> players;

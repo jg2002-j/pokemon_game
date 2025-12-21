@@ -52,7 +52,7 @@ public class PokemonService {
 
     public Pokemon getPokemonByIdOrName(final String identifier) {
         final Generation pokemonGen = Arrays.stream(Generation.values())
-            .filter(gen -> gen.getSlug().equals(client.getSpeciesInfoByIdOrName(identifier).getGeneration().getName()))
+            .filter(gen -> gen.getSlug().equals(client.getSpecies(identifier).getGeneration().getName()))
             .findFirst().orElse(null);
 
         if (pokemonGen == null || pokemonGen.getNumber() > state.getPokemonGen().getNumber()) {
@@ -60,7 +60,7 @@ public class PokemonService {
             throw new BadRequestException("This Pokemon isn't available in the selected generation.");
         }
 
-        final PokemonDto raw = client.getPokemonByIdOrName(identifier);
+        final PokemonDto raw = client.getPokemon(identifier);
         log.info("Successfully retrieved '{}' from PokeAPI.", raw.getName());
 
         final long id = raw.getId();
@@ -101,7 +101,7 @@ public class PokemonService {
         final List<PokemonMove> randomFour = movesAtLevel.stream().limit(4).toList();
 
         return randomFour.stream()
-            .map(pokemonMove -> client.getMoveByIdOrName(pokemonMove.getMove().getName()))
+            .map(pokemonMove -> client.getMove(pokemonMove.getMove().getName()))
             .map(this::mapMove)
             .toList();
     }
@@ -182,7 +182,7 @@ public class PokemonService {
 
     public void populateAllTypes() {
         for (Type type : Type.values()) {
-            final TypeDto dto = client.getTypeByIdOrName(type.getName());
+            final TypeDto dto = client.getType(type.getName());
             type.setImgLink(getTypeIcon(dto));
             TypeDto.DamageRelations dr = dto.getDamageRelations();
             if (dr != null) {
@@ -226,7 +226,7 @@ public class PokemonService {
     public List<SimplePkmnDto> getAllValidPkmnForGen(final int genNum) {
         final List<SimplePkmnDto> allPkmn = new LinkedList<>();
         for (int i = 1; i <= genNum; i++) {
-            final GenerationDto generationDto = client.getGenerationByNum(i);
+            final GenerationDto generationDto = client.getGeneration(i);
             for (final NamedResource pkmnNamedResource : generationDto.getPokemonSpecies()) {
                 final String name = pkmnNamedResource.getName();
                 final String url = pkmnNamedResource.getUrl();

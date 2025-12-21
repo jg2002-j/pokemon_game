@@ -2,6 +2,7 @@ package com.clapped.boundary.rest;
 
 import com.clapped.boundary.rest.dto.GameSettingsDto;
 import com.clapped.boundary.rest.dto.PlayerDto;
+import com.clapped.main.model.Player;
 import com.clapped.main.model.ProcessResult;
 import com.clapped.main.service.GameService;
 import com.clapped.main.service.GameState;
@@ -11,7 +12,10 @@ import com.clapped.main.util.RandomProvider;
 import com.clapped.main.util.SecureRandomProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
@@ -69,6 +73,15 @@ public class GameEndpoint {
     public Response getTurn() {
         final int turn = turnService.getTurnNum();
         return Response.ok(turn).build();
+    }
+
+    @DELETE
+    @Path("/util/clearTeams")
+    public Response clearTeams() {
+        for (final Player player : gameState.getAllPlayers()) {
+            playerService.leave(player.getUsername());
+        }
+        return Response.ok("All players removed from game").build();
     }
 
     @POST

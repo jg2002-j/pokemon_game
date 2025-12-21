@@ -20,22 +20,22 @@ public interface PokeClient {
 
     @GET
     @Path("pokemon/{identifier}")
-    PokemonDto getPokemonByIdOrName(@PathParam("identifier") final String idName);
+    PokemonDto getPokemon(@PathParam("identifier") final String identifier);
 
     @GET
     @Path("move/{identifier}")
-    MoveDto getMoveByIdOrName(@PathParam("identifier") final String idName);
+    MoveDto getMove(@PathParam("identifier") final String identifier);
 
     @GET
-    @Path("pokemon-species/{id}")
-    SpeciesDto getSpeciesInfoByIdOrName(@PathParam("id") final String idName);
+    @Path("pokemon-species/{identifier}")
+    SpeciesDto getSpecies(@PathParam("identifier") final String identifier);
 
     @GET
     @Path("type/{type}")
-    TypeDto getTypeByIdOrName(@PathParam("type") final String typeName);
+    TypeDto getType(@PathParam("type") final String typeName);
 
     @GET
     @Path("generation/{gen}")
-    GenerationDto getGenerationByNum(@PathParam("gen") final int genNum);
+    GenerationDto getGeneration(@PathParam("gen") final int genNum);
 
 }
