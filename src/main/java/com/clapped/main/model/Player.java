@@ -15,9 +15,10 @@ public class Player {
     @Getter
     @Setter
     private String username;
-@Getter
-@Setter
-private String avatarUrl;
+
+    @Getter
+    @Setter
+    private String avatarUrl;
 
     @Getter
     @Setter
