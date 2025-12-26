@@ -1,7 +1,5 @@
 package com.clapped.main.startup;
 
-import com.clapped.main.messaging.events.GameEvent;
-import com.clapped.main.messaging.producer.GameEventProducer;
 import com.clapped.main.model.ProcessResult;
 import com.clapped.main.service.GameState;
 import com.clapped.pokemon.service.PokemonService;

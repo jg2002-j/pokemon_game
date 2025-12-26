@@ -5,5 +5,5 @@ public enum ActionType {
     HEAL,
     WAIT,
     ATTACK,
-    NONE
+    NONE // all Pokémon fainted, player out
 }

@@ -1,10 +1,8 @@
 package com.clapped.main.service;
 
 import com.clapped.boundary.rest.dto.GameSettingsDto;
-import com.clapped.main.messaging.events.EventType;
-import com.clapped.main.messaging.events.GameEvent;
-import com.clapped.main.messaging.events.GameEvtType;
-import com.clapped.main.messaging.producer.GameEventProducer;
+import com.clapped.main.messaging.events.SettingsEvent;
+import com.clapped.main.messaging.producer.SettingsEventProducer;
 import com.clapped.main.model.ProcessResult;
 import com.clapped.pokemon.model.Generation;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -12,8 +10,10 @@ import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @ApplicationScoped
@@ -21,13 +21,13 @@ public class GameService {
 
     private final GameState state;
     private final TurnService turnService;
-    private final GameEventProducer gameEventProducer;
+    private final SettingsEventProducer settingsEventProducer;
 
     @Inject
-    public GameService(final GameState state, final TurnService turnService, final GameEventProducer gameEventProducer) {
+    public GameService(final GameState state, final TurnService turnService, final SettingsEventProducer settingsEventProducer) {
         this.state = state;
         this.turnService = turnService;
-        this.gameEventProducer = gameEventProducer;
+        this.settingsEventProducer = settingsEventProducer;
     }
 
     private boolean isGameSettingsUnlocked() {
@@ -36,23 +36,27 @@ public class GameService {
 
     public List<ProcessResult> updateSettings(final GameSettingsDto dto) {
         log.info("{}", dto);
-        return List.of(
-            changeGlobalLevel(dto.getLevel()),
-            changeGlobalGen(dto.getGen())
+        final List<ProcessResult> results = List.of(
+                changeGlobalLevel(dto.getLevel()),
+                changeGlobalGen(dto.getGen())
         );
+        if (results.stream().allMatch(ProcessResult::isSuccess)) {
+            final LinkedList<String> logMsgs = results.stream()
+                    .map(ProcessResult::getMessage)
+                    .collect(Collectors.toCollection(LinkedList::new));
+            settingsEventProducer.sendSettingsEvent(new SettingsEvent(
+                    state.getPokemonGen().getNumber(),
+                    state.getPokemonLevel(),
+                    logMsgs
+            ));
+        }
+        return results;
     }
 
     private ProcessResult changeGlobalLevel(final int newLvl) {
         if (isGameSettingsUnlocked()) {
             if (newLvl <= 100 && newLvl > 0) {
                 state.setPokemonLevel(newLvl);
-                gameEventProducer.sendGameEvent(new GameEvent(
-                    System.currentTimeMillis(),
-                    EventType.GAME_EVENT,
-                    GameEvtType.LEVEL_CHANGE,
-                    newLvl,
-                    ProcessResult.success("Pokemon Level successfully updated to " + newLvl)
-                ));
                 return ProcessResult.success("Pokemon level now set to " + newLvl);
             } else {
                 return ProcessResult.error("Please choose a level between 1 and 100 (inclusive).");
@@ -64,20 +68,12 @@ public class GameService {
     private ProcessResult changeGlobalGen(final int gen) {
         if (isGameSettingsUnlocked()) {
             final Optional<Generation> newGenerationChoice = Arrays.stream(Generation.values())
-                .filter(generation -> generation.getNumber() == gen)
-                .findFirst();
+                    .filter(generation -> generation.getNumber() == gen)
+                    .findFirst();
             if (newGenerationChoice.isPresent()) {
                 final Generation newGeneration = newGenerationChoice.get();
                 state.setPokemonGen(newGeneration);
-                final ProcessResult res = ProcessResult.success("Pokemon Generation now set to " + newGeneration);
-                gameEventProducer.sendGameEvent(new GameEvent(
-                    System.currentTimeMillis(),
-                    EventType.GAME_EVENT,
-                    GameEvtType.GENERATION_CHANGE,
-                    newGeneration.getNumber(),
-                    res
-                ));
-                return res;
+                return ProcessResult.success("Pokemon Generation now set to " + newGeneration);
             }
             return ProcessResult.error("Invalid option, please choose a generation between 1 and 9.");
         }

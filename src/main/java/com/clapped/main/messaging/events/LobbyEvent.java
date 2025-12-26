@@ -1,7 +1,6 @@
 package com.clapped.main.messaging.events;
 
 import com.clapped.main.model.Player;
-import com.clapped.main.model.ProcessResult;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,10 +8,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PlayerEvent {
-    private long timestamp;
-    private EventType eventType;
-    private PlayerEvtType playerEvtType;
+public class LobbyEvent {
     private Player player;
-    private ProcessResult result;
+    private JoinLeave joinLeave;
+    private String logMsg;
 }

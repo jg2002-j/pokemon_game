@@ -1,6 +1,6 @@
 package com.clapped.main.messaging.producer;
 
-import com.clapped.main.messaging.events.GameEvent;
+import com.clapped.main.messaging.events.LobbyEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -9,15 +9,13 @@ import org.eclipse.microprofile.reactive.messaging.Emitter;
 
 @Slf4j
 @ApplicationScoped
-public class GameEventProducer {
-
+public class LobbyEventProducer {
     @Inject
-    @Channel("game")
-    Emitter<GameEvent> emitter;
+    @Channel("lobby")
+    Emitter<LobbyEvent> emitter;
 
-    public void sendGameEvent(final GameEvent evt) {
-        log.info("Sending new {} event: {}", evt.getGameEvtType(), evt);
+    public void sendLobbyEvent(final LobbyEvent evt) {
+        log.info("Sending new lobby event: {}", evt);
         emitter.send(evt);
     }
-
 }

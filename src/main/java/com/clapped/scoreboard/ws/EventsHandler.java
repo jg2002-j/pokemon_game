@@ -1,12 +1,12 @@
 package com.clapped.scoreboard.ws;
 
-import com.clapped.main.model.ProcessResult;
 import com.clapped.scoreboard.ScoreboardService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.websocket.*;
 import jakarta.websocket.server.ServerEndpoint;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -30,7 +30,7 @@ public class EventsHandler {
         sessions.put(session.getId(), session);
         final String resultMsg = "Syncing game state with new connection: " + session.getId();
         session.getAsyncRemote().sendText(
-                service.serialiseState(ProcessResult.success(resultMsg))
+                service.serialiseState(List.of(resultMsg))
         );
     }
 

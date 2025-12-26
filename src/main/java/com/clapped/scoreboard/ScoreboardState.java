@@ -17,9 +17,11 @@ public class ScoreboardState {
     private int turnNum;
     private Map<String, Player> players;
     private Map<String, List<ActionType>> playerTurnOptions;
+    private Map<String, String> usernamesAndActions;
 
     public ScoreboardState() {
         players = new ConcurrentHashMap<>();
         playerTurnOptions = new ConcurrentHashMap<>();
+        usernamesAndActions = new ConcurrentHashMap<>();
     }
 }

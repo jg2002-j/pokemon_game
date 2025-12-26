@@ -20,11 +20,16 @@ public class StateSnapshot {
     private int turnNum;
     private Map<String, Player> players;
     private Map<String, List<ActionType>> playerTurnOptions;
+    private Map<String, String> usernamesAndActions;
 
     public static StateSnapshot from(final ScoreboardState state) {
-        final Map<String, Player> players = state.getPlayers() == null
-                ? Map.of()
-                : Map.copyOf(state.getPlayers());
+        final Map<String, Player> players;
+        if (state.getPlayers() == null) {
+            players = Map.of();
+        } else {
+            // Copy into a regular map first to avoid CME if the backing map is being mutated.
+            players = Map.copyOf(new HashMap<>(state.getPlayers()));
+        }
 
         final Map<String, List<ActionType>> turnOptions;
         if (state.getPlayerTurnOptions() == null) {
@@ -36,12 +41,20 @@ public class StateSnapshot {
             turnOptions = Map.copyOf(tmp);
         }
 
+        final Map<String, String> usernamesAndActions;
+        if (state.getUsernamesAndActions() == null) {
+            usernamesAndActions = Map.of();
+        } else {
+            usernamesAndActions = Map.copyOf(new HashMap<>(state.getUsernamesAndActions()));
+        }
+
         return new StateSnapshot(
                 state.getPkmnGen(),
                 state.getPkmnLvl(),
                 state.getTurnNum(),
                 players,
-                turnOptions
+                turnOptions,
+                usernamesAndActions
         );
     }
 }

@@ -1,24 +1,22 @@
 package com.clapped.scoreboard.messaging.consumer;
 
-import com.clapped.main.messaging.events.TurnActionEvent;
+import com.clapped.main.messaging.events.SettingsEvent;
 import com.clapped.scoreboard.ScoreboardService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 @ApplicationScoped
-public class TurnActionEventConsumer {
-
+public class SettingsEventConsumer {
     private final ScoreboardService service;
 
     @Inject
-    public TurnActionEventConsumer(final ScoreboardService service) {
+    public SettingsEventConsumer(final ScoreboardService service) {
         this.service = service;
     }
 
-    @Incoming("turn-action-in")
-    public void consume(final TurnActionEvent evt) {
-        service.handleTurnActionEvent(evt);
+    @Incoming("settings-in")
+    public void consume(final SettingsEvent evt) {
+        service.handleSettingsEvent(evt);
     }
-
 }

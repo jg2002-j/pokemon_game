@@ -1,5 +1,5 @@
 package com.clapped.main.messaging.events;
 
-public enum PlayerEvtType {
+public enum JoinLeave {
     JOIN, LEAVE
 }

@@ -1,11 +1,8 @@
 package com.clapped.scoreboard;
 
-import com.clapped.main.messaging.events.GameEvent;
-import com.clapped.main.messaging.events.PlayerEvent;
-import com.clapped.main.messaging.events.TurnActionEvent;
-import com.clapped.main.messaging.events.TurnInfoEvent;
+import com.clapped.main.messaging.events.*;
+import com.clapped.main.model.ActionType;
 import com.clapped.main.model.Player;
-import com.clapped.main.model.ProcessResult;
 import com.clapped.scoreboard.ws.EventsHandler;
 import com.clapped.scoreboard.ws.StateSnapshot;
 import com.clapped.scoreboard.ws.WsMessageWrapper;
@@ -15,7 +12,11 @@ import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import static com.clapped.scoreboard.ws.WsMsgType.ERROR;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import static com.clapped.scoreboard.ws.WsMsgType.STATE_UPDATE;
 
 @Slf4j
@@ -35,57 +36,72 @@ public class ScoreboardService {
         this.state = new ScoreboardState();
     }
 
-    public void handleGameEvent(final GameEvent evt) {
-        log.info("{} | Received {} {} event from Kafka: {}", evt.getTimestamp(), evt.getEventType(), evt.getGameEvtType(), evt);
-        switch (evt.getGameEvtType()) {
-            case TURN_CHANGE -> state.setTurnNum(evt.getNewVal());
-            case LEVEL_CHANGE -> state.setPkmnLvl(evt.getNewVal());
-            case GENERATION_CHANGE -> state.setPkmnGen(evt.getNewVal());
-            default -> log.error("Malformed {} event: {}", evt.getEventType(), evt);
-        }
-        eventsHandler.broadcast(serialiseState(evt.getResult()));
+    public void handleSettingsEvent(final SettingsEvent evt) {
+        log.info("Received settings event from Kafka: {}", evt);
+        state.setPkmnGen(evt.getGeneration());
+        state.setPkmnLvl(evt.getLevel());
+        eventsHandler.broadcast(serialiseState(evt.getLogMsgs()));
     }
 
-    public void handlePlayerEvent(final PlayerEvent evt) {
-        log.info("{} | Received {} {} event from Kafka: {}", evt.getTimestamp(), evt.getEventType(), evt.getPlayerEvtType(), evt);
+    public void handleLobbyEvent(final LobbyEvent evt) {
+        log.info("Received lobby event from Kafka: {}", evt);
         final String username = evt.getPlayer().getUsername();
-        switch (evt.getPlayerEvtType()) {
+        switch (evt.getJoinLeave()) {
             case JOIN -> state.getPlayers().putIfAbsent(username, evt.getPlayer());
             case LEAVE -> {
                 state.getPlayers().remove(username);
                 state.getPlayerTurnOptions().remove(username);
             }
-            default -> log.error("Malformed {} event: {}", evt.getEventType(), evt);
         }
-        eventsHandler.broadcast(serialiseState(evt.getResult()));
+        eventsHandler.broadcast(serialiseState(List.of(evt.getLogMsg())));
     }
 
-    public void handleTurnInfoEvent(final TurnInfoEvent evt) {
-        log.info("{} | Received {} event from Kafka: {}", evt.getTimestamp(), evt.getEventType(), evt);
-        state.getPlayerTurnOptions().clear();
-        if (evt.getPlayerActionOptions() != null) {
-            state.getPlayerTurnOptions().putAll(evt.getPlayerActionOptions());
+    public void handleTurnStartEvent(final TurnStartEvent evt) {
+        log.info("Received turn start event from Kafka: {}", evt);
+        state.setTurnNum(evt.getTurnNum());
+        final Map<String, List<ActionType>> safeTurnOptions;
+        if (evt.getPlayerTurnOptions() == null) {
+            safeTurnOptions = new ConcurrentHashMap<>();
+        } else {
+            final Map<String, List<ActionType>> tmp = new HashMap<>();
+            evt.getPlayerTurnOptions().forEach((k, v) -> tmp.put(k, v == null ? List.of() : List.copyOf(v)));
+            safeTurnOptions = new ConcurrentHashMap<>(tmp);
         }
-        eventsHandler.broadcast(serialiseState(evt.getResult()));
+        state.setPlayerTurnOptions(safeTurnOptions);
+        eventsHandler.broadcast(serialiseState(List.of(evt.getLogMsg())));
     }
 
-    public void handleTurnActionEvent(final TurnActionEvent evt) {
-        log.info("{} | Received {} {} event from Kafka: {}", evt.getTimestamp(), evt.getEventType(), evt.getTurnActionEvtTypes(), evt);
-        final Player target = evt.getAffectedPlayer();
-        if (!state.getPlayers().containsKey(target.getUsername())) {
-            log.warn("TurnAction for unknown player: {}", target.getUsername());
-            return;
+    public void handleTurnQueueEvent(final TurnQueueEvent evt) {
+        log.info("Received turn queue event from Kafka: {}", evt);
+        if (evt.getTurnNum() == state.getTurnNum()) {
+            final Map<String, String> safeUsernamesAndActions = evt.getUsernamesAndActions() == null
+                    ? new ConcurrentHashMap<>()
+                    : new ConcurrentHashMap<>(evt.getUsernamesAndActions());
+            state.setUsernamesAndActions(safeUsernamesAndActions);
+            eventsHandler.broadcast(serialiseState(List.of(evt.getLogMsg())));
+        } else {
+            log.warn("Received turn queue event with outdated turn num, ignoring.");
         }
-        state.getPlayers().put(target.getUsername(), target);
-        eventsHandler.broadcast(serialiseState(evt.getResult()));
     }
 
-    public String serialiseState(final ProcessResult result) {
+    public void handleProcessedTurnEvent(final ProcessedTurnEvent evt) {
+        if (evt.getTurnNum() == state.getTurnNum()) {
+            log.info("Received processed turn event from Kafka: {}", evt);
+            for (final Player player : evt.getChangedPlayers()) {
+                state.getPlayers().put(player.getUsername(), player);
+            }
+            eventsHandler.broadcast(serialiseState(evt.getLogMsgs()));
+        } else {
+            log.warn("Received processed turn event with outdated turn num, ignoring.");
+        }
+    }
+
+    public String serialiseState(final List<String> logMsgs) {
         final WsMessageWrapper msg = new WsMessageWrapper(
                 1,
-                result.isSuccess() ? STATE_UPDATE : ERROR,
+                STATE_UPDATE,
                 StateSnapshot.from(state),
-                result
+                logMsgs
         );
         return toJson(msg);
     }

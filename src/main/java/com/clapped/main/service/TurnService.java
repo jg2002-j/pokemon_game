@@ -1,10 +1,9 @@
 package com.clapped.main.service;
 
-import com.clapped.main.messaging.events.EventType;
-import com.clapped.main.messaging.events.GameEvent;
-import com.clapped.main.messaging.events.TurnInfoEvent;
-import com.clapped.main.messaging.producer.GameEventProducer;
-import com.clapped.main.messaging.producer.TurnInfoEventProducer;
+import com.clapped.main.messaging.events.TurnQueueEvent;
+import com.clapped.main.messaging.events.TurnStartEvent;
+import com.clapped.main.messaging.producer.TurnQueueEventProducer;
+import com.clapped.main.messaging.producer.TurnStartEventProducer;
 import com.clapped.main.model.*;
 import com.clapped.pokemon.model.Medicine;
 import com.clapped.pokemon.model.Move;
@@ -17,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.clapped.main.messaging.events.GameEvtType.TURN_CHANGE;
 import static com.clapped.main.model.ActionType.*;
 import static com.clapped.pokemon.model.pokemon.PokemonStat.SPEED;
 
@@ -29,47 +27,40 @@ public class TurnService {
     @Getter
     private int turnNum = 0;
     private final List<PlayerAction> queuedActions = new ArrayList<>();
-    private final Map<String, List<ActionType>> playerActionChoices = new HashMap<>();
+    private final Map<String, List<ActionType>> playerTurnOptions = new HashMap<>();
 
     private final GameState gameState;
     private final BattleEngine battleEngine;
 
-    private final TurnInfoEventProducer turnInfoEventProducer;
-    private final GameEventProducer gameEventProducer;
+    private final TurnStartEventProducer turnStartEventProducer;
+    private final TurnQueueEventProducer turnQueueEventProducer;
 
     @Inject
     public TurnService(
             final GameState gameState,
             final BattleEngine battleEngine,
-            final GameEventProducer gameEventProducer,
-            final TurnInfoEventProducer turnInfoEventProducer
+            final TurnStartEventProducer turnStartEventProducer,
+            final TurnQueueEventProducer turnQueueEventProducer
     ) {
         this.gameState = gameState;
         this.battleEngine = battleEngine;
-        this.gameEventProducer = gameEventProducer;
-        this.turnInfoEventProducer = turnInfoEventProducer;
+        this.turnStartEventProducer = turnStartEventProducer;
+        this.turnQueueEventProducer = turnQueueEventProducer;
     }
 
     // 1. Start a new turn
 
     public ProcessResult startTurn() {
         turnNum++;
-        gameEventProducer.sendGameEvent(new GameEvent(
-                System.currentTimeMillis(),
-                EventType.GAME_EVENT,
-                TURN_CHANGE,
-                turnNum,
-                ProcessResult.success("Turn " + turnNum + " started.")
-        ));
+        final String msg = "Turn " + turnNum + " started.";
         populatePlayerActionChoices();
-        turnInfoEventProducer.sendTurnInfoEvent(new TurnInfoEvent(
-                System.currentTimeMillis(),
-                EventType.TURN_INFO_EVENT,
-                playerActionChoices,
-                ProcessResult.success(null)
+        turnStartEventProducer.sendTurnStartEvent(new TurnStartEvent(
+                turnNum,
+                playerTurnOptions,
+                msg
         ));
         queueWaitActions();
-        return ProcessResult.success("Turn " + turnNum + " started.");
+        return ProcessResult.success(msg);
     }
 
     private void populatePlayerActionChoices() {
@@ -79,21 +70,21 @@ public class TurnService {
             if (currentPokemon.isFainted()) {
                 boolean hasNonFaintedPokemon = player.getPokemonTeam().stream().anyMatch(pokemon -> !pokemon.isFainted());
                 if (hasNonFaintedPokemon) {
-                    playerActionChoices.put(username, List.of(SWITCH));
+                    playerTurnOptions.put(username, List.of(SWITCH));
                 } else {
-                    playerActionChoices.put(username, List.of(NONE));
+                    playerTurnOptions.put(username, List.of(NONE));
                 }
             } else if (currentPokemon.getMoveRemainingTurns() > 0) {
-                playerActionChoices.put(username, List.of(WAIT));
+                playerTurnOptions.put(username, List.of(WAIT));
             } else {
-                playerActionChoices.put(username, List.of(SWITCH, ATTACK, HEAL));
+                playerTurnOptions.put(username, List.of(SWITCH, ATTACK, HEAL));
             }
         }
     }
 
     private void queueWaitActions() {
         for (Player player : gameState.getAllPlayers()) {
-            if (playerActionChoices.get(player.getUsername()).contains(WAIT)) {
+            if (playerTurnOptions.get(player.getUsername()).contains(WAIT)) {
                 queuedActions.add(new WaitAction(player));
             }
         }
@@ -238,11 +229,11 @@ public class TurnService {
             return ProcessResult.error("Could not find '" + turnUsername + "'");
         }
         final Player player = gameState.getPlayer(turnUsername);
-        if (playerActionChoices.get(player.getUsername()).contains(NONE)) {
+        if (playerTurnOptions.get(player.getUsername()).contains(NONE)) {
             return ProcessResult.error("No actions can be taken at this time, entire team is fainted!");
         }
-        if (!playerActionChoices.get(player.getUsername()).contains(actionType)) {
-            return ProcessResult.error("Invalid option for " + turnUsername + ", must be one of: " + playerActionChoices.get(player));
+        if (!playerTurnOptions.get(player.getUsername()).contains(actionType)) {
+            return ProcessResult.error("Invalid option for " + turnUsername + ", must be one of: " + playerTurnOptions.get(player));
         }
         return null;
     }
@@ -254,7 +245,13 @@ public class TurnService {
         if (allPlayersQueuedAction()) {
             results.addAll(endTurn());
         } else {
-            log.info("{}/{} turns taken, waiting for {}.", queuedActions.size(), gameState.getAllPlayers().size(), getUsernamesWithoutTurns());
+            log.info("{}/{} turns taken, waiting for {}.", queuedActions.size(), gameState.getAllPlayers().size(), getUsernamesWithoutActions());
+            turnQueueEventProducer.sendTurnQueueEvent(new TurnQueueEvent(
+                    turnNum,
+                    getUsernamesAndActions(),
+                    getUsernamesWithoutActions(),
+                    action.toPrettyString()
+            ));
         }
         return results;
     }
@@ -341,7 +338,7 @@ public class TurnService {
         return null;
     }
 
-    public boolean allPlayersQueuedAction() {
+    private boolean allPlayersQueuedAction() {
         final List<String> allPlayerUsers = gameState.getAllPlayers().stream().map(Player::getUsername).toList();
         for (String player : allPlayerUsers) {
             if (queuedActions.stream().noneMatch(turn -> turn.getTurnUser().equals(player))) {
@@ -351,7 +348,15 @@ public class TurnService {
         return true;
     }
 
-    public List<String> getUsernamesWithoutTurns() {
+    private Map<String, String> getUsernamesAndActions() {
+        Map<String, String> usernamesWithActions = new HashMap<>();
+        for (final PlayerAction action : queuedActions) {
+            usernamesWithActions.put(action.getTurnUser(), action.toPrettyString());
+        }
+        return usernamesWithActions;
+    }
+
+    private List<String> getUsernamesWithoutActions() {
         return gameState.getAllPlayers().stream()
                 .map(Player::getUsername)
                 .filter(username -> queuedActions.stream()

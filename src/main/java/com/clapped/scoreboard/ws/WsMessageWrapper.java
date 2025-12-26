@@ -1,9 +1,10 @@
 package com.clapped.scoreboard.ws;
 
-import com.clapped.main.model.ProcessResult;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -12,5 +13,5 @@ public class WsMessageWrapper {
     private int version;
     private WsMsgType type;
     private StateSnapshot payload;
-    private ProcessResult result;
+    private List<String> logMsgs;
 }

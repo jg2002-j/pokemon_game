@@ -1,10 +1,9 @@
 package com.clapped.main.service;
 
 import com.clapped.boundary.rest.dto.PlayerDto;
-import com.clapped.main.messaging.events.EventType;
-import com.clapped.main.messaging.events.PlayerEvent;
-import com.clapped.main.messaging.events.PlayerEvtType;
-import com.clapped.main.messaging.producer.PlayerEventProducer;
+import com.clapped.main.messaging.events.JoinLeave;
+import com.clapped.main.messaging.events.LobbyEvent;
+import com.clapped.main.messaging.producer.LobbyEventProducer;
 import com.clapped.main.model.Player;
 import com.clapped.main.model.ProcessResult;
 import com.clapped.pokemon.model.Pokemon;
@@ -24,17 +23,16 @@ public class PlayerService {
     public static final String ERROR_PREFIX = "ERROR: ";
     private final GameState gameState;
     private final PokemonService pokeService;
-    private final PlayerEventProducer playerEventProducer;
+    private final LobbyEventProducer lobbyEventProducer;
 
     @Inject
     public PlayerService(
             final GameState gameState,
             final PokemonService pokeService,
-            final PlayerEventProducer playerEventProducer
-    ) {
+            final LobbyEventProducer lobbyEventProducer) {
         this.gameState = gameState;
         this.pokeService = pokeService;
-        this.playerEventProducer = playerEventProducer;
+        this.lobbyEventProducer = lobbyEventProducer;
     }
 
     public ProcessResult join(final PlayerDto dto) {
@@ -69,14 +67,13 @@ public class PlayerService {
                     "JOIN: %s joined Team %d with %s!",
                     username, teamNum, pokemonTeam.stream().map(Pokemon::toPrettyString).toList()
             );
-            final ProcessResult result = ProcessResult.success(msg);
-            playerEventProducer.sendPlayerEvent(new PlayerEvent(
-                    System.currentTimeMillis(), EventType.PLAYER_EVENT, PlayerEvtType.JOIN, player, result
+            lobbyEventProducer.sendLobbyEvent(new LobbyEvent(
+                    player, JoinLeave.JOIN, msg
             ));
-            return result;
+            return ProcessResult.success(msg);
         } catch (Exception ex) {
             log.error(ERROR_PREFIX, ex);
-            return ProcessResult.error("Failed to handle team event: " + ex.getMessage());
+            return ProcessResult.error("Failed to handle Player join: " + ex.getMessage());
         }
     }
 
@@ -88,7 +85,7 @@ public class PlayerService {
             return ProcessResult.error("Invalid team number (" + teamNum + "); ignoring JOIN");
         }
         if (username.isBlank()) {
-            return ProcessResult.error("Username must not be blank");
+            return ProcessResult.error("Username must not be blank; ignoring JOIN");
         }
         if (gameState.getPlayersForTeam(teamNum).size() >= 5) {
             return ProcessResult.error("Team " + teamNum + " is already full; ignoring JOIN");
@@ -97,7 +94,7 @@ public class PlayerService {
             return ProcessResult.error(username + " already in the game; ignoring JOIN");
         }
         if (pkmnTeamStrings == null || pkmnTeamStrings.isEmpty() || pkmnTeamStrings.stream().allMatch(String::isBlank)) {
-            return ProcessResult.error("Pokemon team must not be empty or blank.");
+            return ProcessResult.error("Pokemon team must not be empty or blank; ignoring JOIN");
         }
         return null;
     }
@@ -107,14 +104,13 @@ public class PlayerService {
             Player removed = gameState.removePlayer(username);
             if (removed == null) return ProcessResult.error("Failed to find player: " + username + "; ignoring LEAVE");
             String msg = "LEAVE: Player " + username + " left Team " + removed.getTeamNum();
-            final ProcessResult result = ProcessResult.success(msg);
-            playerEventProducer.sendPlayerEvent(
-                    new PlayerEvent(System.currentTimeMillis(), EventType.PLAYER_EVENT, PlayerEvtType.LEAVE, removed, result)
-            );
-            return result;
+            lobbyEventProducer.sendLobbyEvent(new LobbyEvent(
+                    removed, JoinLeave.LEAVE, msg
+            ));
+            return ProcessResult.success(msg);
         } catch (Exception ex) {
             log.error(ERROR_PREFIX, ex);
-            return ProcessResult.error("Failed to handle team event: " + ex.getMessage());
+            return ProcessResult.error("Failed to handle Player leave: " + ex.getMessage());
         }
     }
 }
